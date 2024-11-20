@@ -1,0 +1,13 @@
+[
+    {
+        "name": "Max Mustermann",
+        "telefon": "123-456-7890",
+        "email": "max@beispiel.de"
+    },
+    {
+        "name": "Ben",
+        "telefon": "029853853464",
+        "email": "gaertner@wpv-baubetreuung.de",
+        "durchwahl": "-42"
+    }
+]
