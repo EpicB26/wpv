@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kontakte</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+
+        header {
+            background-color: #0073e6;
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            height: 100px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        header img {
+            height: 80px;
+            margin-right: 20px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 90px;
+        }
+
+        main {
+            padding: 160px 20px 20px 20px;
+        }
+
+        .kontakt {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kontakt-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kontakt-info span {
+            margin: 5px 0;
+        }
+
+        .kontakt-info a {
+            color: #0073e6;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .kontakt-info a:hover {
+            text-decoration: underline;
+        }
+
+        .fehlend {
+            color: #666;
+            font-style: italic;
+        }
+
+        .formular {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            z-index: 1000;
+        }
+
+        .formular input,
+        .formular button {
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            width: calc(100% - 20px);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .formular button {
+            background-color: #0073e6;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .formular button:hover {
+            background-color: #005bb5;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="resources/logo.png" alt="Firmenlogo">
+    <h1>Kontaktliste</h1>
+</header>
+
+<main id="kontakt-liste">
+    <p>Kontakte werden geladen...</p>
+</main>
+
+<div class="formular">
+    <h2>Neuen Kontakt hinzufügen</h2>
+    <input type="text" id="name" placeholder="Name" required>
+    <input type="text" id="durchwahl" placeholder="Durchwahl (optional)">
+    <input type="text" id="telefon" placeholder="Telefonnummer" required>
+    <input type="email" id="email" placeholder="E-Mail" required>
+    <button onclick="addKontakt()">Kontakt hinzufügen</button>
+</div>
+
+<script>
+// Funktion, um Daten in die Zwischenablage zu kopieren
+function kopiereInZwischenablage(text, event) {
+    event.preventDefault();  // Verhindert das Standardverhalten des Links
+
+    console.log("Kopiervorgang gestartet...");
+
+    try {
+        // Erstellt ein unsichtbares Textfeld, um den Text zu kopieren
+        const textField = document.createElement('input');
+        document.body.appendChild(textField); // Textfeld ins DOM einfügen
+        textField.value = text;  // Setze den zu kopierenden Text
+        textField.select();  // Markiere den Text im Textfeld
+        document.execCommand('copy');  // Kopiere den markierten Text
+
+        // Löscht das Textfeld nach dem Kopieren
+        document.body.removeChild(textField);
+
+        // Tooltip erstellen
+        const tooltip = document.createElement('div');
+        tooltip.textContent = 'Copied!';
+        tooltip.style.position = 'absolute';
+        tooltip.style.backgroundColor = '#0073e6';
+        tooltip.style.color = '#fff';
+        tooltip.style.padding = '5px 10px';
+        tooltip.style.borderRadius = '5px';
+        tooltip.style.fontSize = '14px';
+        tooltip.style.zIndex = '1000';
+        tooltip.style.top = `${event.clientY + 10}px`; // Tooltip knapp unter der Mausposition
+        tooltip.style.left = `${event.clientX + 10}px`;
+        tooltip.style.transition = 'opacity 0.5s';
+        document.body.appendChild(tooltip);
+
+        // Tooltip verschwindet nach 1.5 Sekunden
+        setTimeout(() => {
+            tooltip.style.opacity = '0';
+            setTimeout(() => document.body.removeChild(tooltip), 500);  // Entferne Tooltip nach der Animation
+        }, 1500);
+
+        console.log(`${text} wurde in die Zwischenablage kopiert!`);
+    } catch (err) {
+        console.error('Fehler beim Kopieren:', err);
+        alert('Fehler beim Kopieren des Texts. Bitte versuchen Sie es später erneut.');
+    }
+}
+
+
+
+function ladeKontakte() {
+    fetch('/resources/kontakte.json', { cache: "no-store" })
+        .then(response => response.json())
+        .then(data => {
+            const kontaktListe = document.getElementById('kontakt-liste');
+            kontaktListe.innerHTML = '';
+
+            if (data.length === 0) {
+                kontaktListe.innerHTML = '<p>Keine Kontakte vorhanden.</p>';
+                return;
+            }
+
+            data.forEach(kontakt => {
+                const kontaktDiv = document.createElement('div');
+                kontaktDiv.className = 'kontakt';
+
+                const kontaktInfo = document.createElement('div');
+                kontaktInfo.className = 'kontakt-info';
+
+                const name = document.createElement('span');
+                name.textContent = kontakt.name || 'Unbekannt';
+                kontaktInfo.appendChild(name);
+
+                const telefon = document.createElement('span');
+                const nummerMitDurchwahl = kontakt.durchwahl
+                    ? `${kontakt.durchwahl} ${kontakt.telefon}`
+                    : kontakt.telefon;
+
+                if (kontakt.telefon) {
+                    const telefonLink = document.createElement('a');
+                    telefonLink.textContent = nummerMitDurchwahl;
+                    telefonLink.href = '#';
+                    telefonLink.onclick = (event) => kopiereInZwischenablage(nummerMitDurchwahl, event);
+                    telefon.appendChild(telefonLink);
+                } else {
+                    telefon.textContent = 'Telefonnummer nicht verfügbar';
+                    telefon.className = 'fehlend';
+                }
+                kontaktInfo.appendChild(telefon);
+
+                const email = document.createElement('span');
+                if (kontakt.email) {
+                    const emailLink = document.createElement('a');
+                    emailLink.textContent = kontakt.email;
+                    emailLink.href = '#';
+                    emailLink.onclick = (event) => kopiereInZwischenablage(kontakt.email, event);
+                    email.appendChild(emailLink);
+                } else {
+                    email.textContent = 'E-Mail nicht verfügbar';
+                    email.className = 'fehlend';
+                }
+                kontaktInfo.appendChild(email);
+
+                kontaktDiv.appendChild(kontaktInfo);
+                kontaktListe.appendChild(kontaktDiv);
+            });
+        })
+        .catch(error => {
+            console.error(error);
+            document.getElementById('kontakt-liste').textContent = 'Fehler beim Laden der Kontakte.';
+        });
+}
+
+window.onload = ladeKontakte;
+</script>
+
+</body>
+</html>
